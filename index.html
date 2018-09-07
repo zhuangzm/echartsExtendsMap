@@ -1,0 +1,207 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>全国地图下钻</title>
+    <!-- jQuery -->
+	<script type="text/javascript" src="./jquery/jquery-3.1.1.min.js"></script>
+    <!-- 引入echarts -->
+	<script type="text/javascript" src="./echarts/echarts.min.js"></script>
+	<script type="text/javascript" src="./echarts/extendsMap.js"></script>
+
+    <script type="text/javascript">
+    	var eMap;
+        $(document).ready(function() {
+
+			eMap = new extendsMap({
+                containerId: 'div_chart',
+                adcode: 100000,
+                adname: '全国',
+                echartOption: echartMapOption,
+				getAjaxData: getAjaxData,
+                convertAjaxData: convertAjaxData,
+                callback: function(adname, adcode, ajaxData){
+                    loadChartNTable(ajaxData);
+				},
+            });
+			
+         });
+
+        var getAjaxData = function(upcode) {
+	        var data = [];
+	        var features = eMap.geoData.features;
+
+	        for(var i = 0, len = features.length; i < len; i++) {
+	            var properties = features[i].properties;
+	            var d = {
+	                name: properties.name,
+	                value: Math.round(Math.random()*1000)
+	            }
+	            data.push(d);
+	        }
+	        return data;
+
+        }
+
+        var convertAjaxData = function(data) {
+            var res = [];
+            for (var i = 0; i < data.length; i++) {
+				res.push({
+					name: data[i].name,
+					value: data[i].value,
+				});
+            }
+            return res;
+        }
+
+		var max = 1500,
+            min = 0; // todo
+        var maxSize4Pin = 60,
+            minSize4Pin = 20;
+
+        var echartMapOption = {
+            title: {
+                text: '全国地图下钻',
+                // subtext: '',
+                left: 'center',
+            },
+            tooltip : {
+                trigger: 'item',
+                formatter: function (params) {
+                    // console.log(params);
+                    if(typeof(params.value)[2] == 'undefined'){
+                        return params.name + ' : ' + params.value;
+                    }else{
+                        return params.name + ' : ' + params.value[2];
+                    }
+                },
+                backgroundColor: 'rgb(242,242,242)',
+                borderColor: '#aaa',
+                borderWidth: 1,
+                borderRadius: 4,
+                textStyle: {
+                    color: '#ff8811',
+                    textBorderColor: '#000',
+                    textBorderWidth: 1,
+                    fontSize: 15
+                },
+            },
+            geo: {
+                map: '',
+                label: {
+                    normal: {
+                        position: 'right',
+                    },
+                    emphasis: {
+                        show:false,
+                    }
+                },
+                itemStyle: {
+                    normal:{
+                        borderColor: 'rgba(0, 0, 0, 0.2)'
+                    },
+                    emphasis:{
+                        areaColor: null,
+                        shadowOffsetX: 0,
+                        shadowOffsetY: 0,
+                        shadowBlur: 20,
+                        borderWidth: 0,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                    }
+                }
+            },
+            visualMap: {
+                left: 'left',
+                min: min,
+                max: max,
+                inRange: {
+                    color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026'],
+                },
+                text:['高','低'],           // 文本，默认为数值文本
+                calculable: true,
+                seriesIndex: 0,
+            },
+            series: [
+                {
+                    name: '地图',
+                    type: 'map',
+                    roam: false,
+                    geoIndex: 0,
+                    label: {
+                        normal: {
+                            formatter: '{b}',
+                        },
+                        emphasis: {
+                            show: false,
+                        },
+                    },
+                    textFixed: {
+                        Alaska: [20, -20]
+                    },
+                },
+                {
+                    name: '散点',
+                    type: 'scatter',
+                    coordinateSystem: 'geo',
+                    symbolSize: function(val) {
+                        return 12;
+                    },
+                    hoverAnimation: true,
+                    label: {
+                        normal: {
+                            formatter: '{b}',
+                            position: 'right',
+                            color: '#000',
+                            show: true
+                        },
+                        emphasis: {
+                            show: true
+                        }
+                    },
+                    itemStyle: {
+                        normal: {
+                            color: '#05C3F9',
+                            shadowBlur: 10,
+                            shadowColor: '#333'
+                        }
+                    },
+                    zlevel: 1,
+                },
+                {
+                    name: '点',
+                    type: 'scatter',
+                    coordinateSystem: 'geo',
+                    symbol: 'pin', //气泡
+                    symbolSize: function(val) {
+                        // console.log(val);
+                        var a = (maxSize4Pin - minSize4Pin) / (max - min);
+                        var b = minSize4Pin - a * min;
+                        b = maxSize4Pin - a * max;
+                        return a * val[2] + b;
+                    },
+                    label: {
+                        normal: {
+                            show: true,
+                            formatter: function (params) {
+                                // console.log(params);
+                                return params.data.value[2];
+                            },
+                            textStyle: {
+                                color: '#fff',
+                                fontSize: 9,
+                            }
+                        }
+                    },
+                    itemStyle: {
+                        normal: {
+                            color: '#F62157', //标志颜色
+                        }
+                    },
+                    zlevel: 2,
+                },
+            ],
+        };
+    </script>
+</head>
+<body>
+<div id="div_chart" style="width: 800px;height: 600px;border: 1px solid #aeaeae;margin-top: 20px;margin-bottom: 10px;"></body>
+</html>
